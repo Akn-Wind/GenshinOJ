@@ -58,7 +58,7 @@ def get_module_instance(self, module_id: str):
 
 这里我们规定，客户端发过来的消息前面加个 `on_` 便是我们要调用的回调 callback 函数。
 
-显然一个消息经常要动到多个 WSApp 来处理，为了方便我直接 `getattr()`，若这个 WSApp 没有实现这个消息的处理方法，触发了 `AttributeError` 我直接不管了 `pass` 掉，这样就用Python 反射机制实现了对于每条消息的处理。
+显然一个消息经常要动到多个 WSApp 来处理，为了方便我直接 `getattr()`，若这个 WSApp 没有实现这个消息的处理方法，触发了 `AttributeError` 我直接不管了 `pass` 掉，这样就用 Python 反射机制实现了对于每条消息的处理。
 
 也就是说，我们以后为了添加功能只要写一个 WSApp 就行，大大提高了代码简洁与范式化程度。
 

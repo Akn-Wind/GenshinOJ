@@ -5,17 +5,21 @@ import {
     webLightTheme
 } from "@fluentui/react-components";
 
-import NavBar from "./navbar";
+import NavBar from "./Navbar";
 
 import "../css/style.css";
-import React from "react";
+import useWebSocket from "react-use-websocket";
 
 export default function Root() {
+    const {
+        sendJsonMessage,
+        lastJsonMessage,
+    } = useWebSocket("ws://" + location.host + "/wsapi", { share: true });
     return (
         <FluentProvider theme={webLightTheme}>
             <NavBar />
             <div>
-                <Outlet />
+                <Outlet context={{ sendJsonMessage, lastJsonMessage }} />
             </div>
         </FluentProvider>
     );

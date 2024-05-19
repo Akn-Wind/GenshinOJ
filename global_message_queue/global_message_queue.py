@@ -30,9 +30,6 @@ class global_message_queue:
 
     def push_message(self, to_module_id: str, message: dict) -> bool:
         self.message_queue[to_module_id].append(message)
-
-    def get_compiler_root_path(self):
-        return '{}/compiler'.format(os.getcwd())
     
     async def execute_command(self, command: str, timeout: int | float | None = None):
         try:
