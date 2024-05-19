@@ -34,19 +34,38 @@ const useStyles = makeStyles({
     },
 });
 
-function ProblemListFetcher({ setProblemList, requestKey, lastJsonMessage }) {
+function ProblemListFetcher({ setProblemList, requestKey, lastJsonMessage }: {
+    setProblemList: React.Dispatch<React.SetStateAction<string[]>>;
+    requestKey: string;
+    lastJsonMessage: unknown;
+}) {
     const [websocketMessageHistory, setWebsocketMessageHistory] = useState([]);
     useEffect(() => {
         if (lastJsonMessage !== null)
-            setWebsocketMessageHistory((previousMessageHistory) => previousMessageHistory.concat(lastJsonMessage));
+            setWebsocketMessageHistory((previousMessageHistory) => previousMessageHistory.concat(lastJsonMessage as []));
     }, [lastJsonMessage]);
 
     useEffect(() => {
-        let newProblemList = [], changed = false;
+        let newProblemList: string[] = [], changed = false;
         const _websocketMessageHistory = websocketMessageHistory;
-        _websocketMessageHistory.map((message, index) => {
-            if (message && 'content' in message && 'request_key' in message.content && 'problem_set' in message.content) {
-                console.log(message);
+        _websocketMessageHistory.map((_message, index) => {
+            interface ProblemSet {
+                type: string;
+                content: {
+                    problem_set: string[],
+                    request_key: string
+                };
+            }
+
+            function isProblemSet(x: object) {
+                if ('type' in x && 'content' in x && typeof x.content === 'object') {
+                    return 'problem_set' in (x.content as object) && 'request_key' in (x.content as object);
+                }
+
+                return false;
+            }
+            if (_message && isProblemSet(_message)) {
+                const message = _message as ProblemSet;
                 if (message.content.request_key === requestKey) {
                     changed = true;
                     newProblemList = message.content.problem_set;
@@ -57,20 +76,20 @@ function ProblemListFetcher({ setProblemList, requestKey, lastJsonMessage }) {
 
         if (changed) setProblemList(newProblemList);
         if (!globals.compareArray(_websocketMessageHistory, websocketMessageHistory)) setWebsocketMessageHistory(_websocketMessageHistory);
-    }, [websocketMessageHistory, requestKey]);
+    }, [websocketMessageHistory, requestKey, setProblemList]);
 
     return <div></div>;
 }
 
-export function ProblemList({ sendJsonMessage, lastJsonMessage }) {
-    const [websocketMessageHistory, setWebsocketMessageHistory] = useState([]);
+export function ProblemList({ sendJsonMessage, lastJsonMessage }: { sendJsonMessage: globals.SendJsonMessage, lastJsonMessage: unknown }) {
+    const [, setWebsocketMessageHistory] = useState([]);
     const [problemList, setProblemList] = useState([]);
     const [requestKey, setRequestKey] = useState("");
     const navigate = useNavigate();
 
     useEffect(() => {
         if (lastJsonMessage !== null)
-            setWebsocketMessageHistory((previousMessageHistory) => previousMessageHistory.concat(lastJsonMessage));
+            setWebsocketMessageHistory((previousMessageHistory) => previousMessageHistory.concat(lastJsonMessage as []));
     }, [lastJsonMessage]);
 
     const handleLoadProblemList = useCallback(() => {
@@ -83,7 +102,7 @@ export function ProblemList({ sendJsonMessage, lastJsonMessage }) {
         });
 
         return _requestKey;
-    }, []);
+    }, [sendJsonMessage]);
 
     useEffect(() => {
         setRequestKey(handleLoadProblemList());
@@ -108,14 +127,14 @@ export function ProblemList({ sendJsonMessage, lastJsonMessage }) {
             </TableBody>
         </Table>
         <ProblemListFetcher
-            setProblemList={setProblemList}
+            setProblemList={setProblemList as React.Dispatch<React.SetStateAction<string[]>>}
             lastJsonMessage={lastJsonMessage}
             requestKey={requestKey} />
     </div>;
 }
 
 export default function Problem() {
-    const { sendJsonMessage, lastJsonMessage } = useOutletContext();
+    const { sendJsonMessage, lastJsonMessage } = useOutletContext<globals.WebSocketHook>();
     const navigate = useNavigate();
     const [dialogRequireLoginOpenState, setDialogRequireLoginOpenState] = useState(false);
 

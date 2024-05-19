@@ -76,7 +76,6 @@ class music_player_server:
                                     'streamed_data': playing_music_file_numpy_array[:int(playing_music_file_samplerate * 0.5)].tolist()
                                 }
                             }
-                                    
                         try:
                             await playing_user['websocket_protocol'].send(json.dumps(response))
                             playing_user['already_playing'] = True

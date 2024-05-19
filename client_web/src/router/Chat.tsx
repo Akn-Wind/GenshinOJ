@@ -34,18 +34,39 @@ const useStyles = makeStyles({
     },
 });
 
-function OnlineUsersListFetcher({ setOnlineUsersList, requestKey, lastJsonMessage }) {
+function OnlineUsersListFetcher({ setOnlineUsersList, requestKey, lastJsonMessage }: {
+    setOnlineUsersList: React.Dispatch<React.SetStateAction<string[]>>;
+    requestKey: string;
+    lastJsonMessage: unknown;
+}) {
     const [websocketMessageHistory, setWebsocketMessageHistory] = useState([]);
     useEffect(() => {
         if (lastJsonMessage !== null)
-            setWebsocketMessageHistory((previousMessageHistory) => previousMessageHistory.concat(lastJsonMessage));
+            setWebsocketMessageHistory((previousMessageHistory) => previousMessageHistory.concat(lastJsonMessage as []));
     }, [lastJsonMessage]);
 
     useEffect(() => {
-        let newOnlineUsersList = [], changed = false;
+        let newOnlineUsersList: string[] = [], changed = false;
         const _websocketMessageHistory = websocketMessageHistory;
-        _websocketMessageHistory.map((message, index) => {
-            if (message && 'content' in message && 'type' in message && 'online_users' in message.content && 'request_key' in message.content) {
+        _websocketMessageHistory.map((_message, index) => {
+            interface OnlineUsersList {
+                type: string;
+                content: {
+                    online_users: string[],
+                    request_key: string
+                };
+            }
+
+            function isOnlineUsersList(x: object) {
+                if ('type' in x && 'content' in x && typeof x.content === 'object') {
+                    return 'online_users' in (x.content as object) &&
+                        'request_key' in (x.content as object);
+                }
+
+                return false;
+            }
+            if (_message && isOnlineUsersList(_message)) {
+                const message = _message as OnlineUsersList;
                 console.log(message);
                 if (message.type === 'online_user' && message.content.request_key === requestKey) {
                     changed = true;
@@ -57,20 +78,23 @@ function OnlineUsersListFetcher({ setOnlineUsersList, requestKey, lastJsonMessag
 
         if (changed) setOnlineUsersList(newOnlineUsersList.filter((element) => element !== globals.fetchData("loginUsername")));
         if (!globals.compareArray(_websocketMessageHistory, websocketMessageHistory)) setWebsocketMessageHistory(_websocketMessageHistory);
-    }, [websocketMessageHistory, requestKey]);
+    }, [websocketMessageHistory, requestKey, setOnlineUsersList]);
 
     return <div></div>;
 }
 
-export function ChatList({ sendJsonMessage, lastJsonMessage }) {
-    const [websocketMessageHistory, setWebsocketMessageHistory] = useState([]);
+export function ChatList({ sendJsonMessage, lastJsonMessage }: {
+    sendJsonMessage: globals.SendJsonMessage,
+    lastJsonMessage: unknown
+}) {
+    const [, setWebsocketMessageHistory] = useState([]);
     const [onlineUsersList, setOnlineUsersList] = useState([]);
     const [requestKey, setRequestKey] = useState("");
     const navigate = useNavigate();
 
     useEffect(() => {
         if (lastJsonMessage !== null)
-            setWebsocketMessageHistory((previousMessageHistory) => previousMessageHistory.concat(lastJsonMessage));
+            setWebsocketMessageHistory((previousMessageHistory) => previousMessageHistory.concat(lastJsonMessage as []));
     }, [lastJsonMessage]);
 
     const handleLoadOnlineUsersList = useCallback(() => {
@@ -83,7 +107,7 @@ export function ChatList({ sendJsonMessage, lastJsonMessage }) {
         });
 
         return _requestKey;
-    }, []);
+    }, [sendJsonMessage]);
 
     useEffect(() => {
         setRequestKey(handleLoadOnlineUsersList());
@@ -108,15 +132,14 @@ export function ChatList({ sendJsonMessage, lastJsonMessage }) {
             </TableBody>
         </Table>
         <OnlineUsersListFetcher
-            setOnlineUsersList={setOnlineUsersList}
+            setOnlineUsersList={setOnlineUsersList as React.Dispatch<React.SetStateAction<string[]>>}
             lastJsonMessage={lastJsonMessage}
             requestKey={requestKey} />
     </div>;
 }
 
 export default function Chat() {
-    const { sendJsonMessage, lastJsonMessage } = useOutletContext();
-    const [websocketMessageHistory, setWebsocketMessageHistory] = useState([]);
+    const { sendJsonMessage, lastJsonMessage } = useOutletContext<globals.WebSocketHook>();
     const navigate = useNavigate();
     const [dialogRequireLoginOpenState, setDialogRequireLoginOpenState] = useState(false);
 

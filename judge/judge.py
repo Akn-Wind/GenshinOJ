@@ -44,13 +44,28 @@ class judge:
 
                 # Compile Part
 
-                await self.server_instance.get_module_instance(
+                exit_code = await self.server_instance.get_module_instance(
                     'global_message_queue').execute_command(
                         self.server_instance.get_module_instance(
                             'compilers_manager').
                         get_compile_file_command_by_filename_and_language(
                             'submission_' + str(submission_id),
                             submission_language))
+                if exit_code != 0:
+                    judgment_result = {
+                        'submission_id': judgment['submission_id'],
+                        'result': 'Compile Error',
+                        'score': 0
+                    }
+                    response = dict()
+                    response['type'] = 'submission_result'
+                    response['content'] = judgment_result
+                    await judgment['websocket_protocol'].send(
+                        json.dumps(response))
+                    response.clear()
+                    del judgment_result
+                    print('Judged one.')
+                    break
 
                 # Judging Part
                 try:
@@ -66,9 +81,11 @@ class judge:
                     except:
                         judgment_result = {
                             'submission_id': judgment['submission_id'],
-                            'result': 'Compile Error'
+                            'result': 'Unknown Error',
+                            'score': 0
                         }
-                        response = judgment_result
+                        response = dict()
+                        response['content'] = judgment_result
                         response['type'] = 'submission_result'
                         await judgment['websocket_protocol'].send(
                             json.dumps(response))
@@ -174,8 +191,9 @@ class judge:
                             'reasons': reasons
                         }
 
-                    response = judgment_result
+                    response = dict()
                     response['type'] = 'submission_result'
+                    response['content'] = judgment_result
                     await judgment['websocket_protocol'].send(
                         json.dumps(response))
                     response.clear()

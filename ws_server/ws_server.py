@@ -117,7 +117,8 @@ class ws_server:
                         websocket_protocol)
                     await asyncio.sleep(0)
                 except AttributeError as e:
-                    pass
+                    logging.critical("`on_close_connection` callback not found. Maybe you haven't implemented it yet?")
+                    raise e
                 except Exception as e:
                     raise e
 
@@ -129,7 +130,7 @@ class ws_server:
                 await websocket_protocol.recv()
                 await asyncio.sleep(0)
 
-        except websockets.exceptions.ConnectionClosedOK:
+        except websockets.exceptions.ConnectionClosed:
             try:
                 for ws_server_application in self.ws_server_applications:
                     try:
@@ -137,29 +138,16 @@ class ws_server:
                             websocket_protocol)
                         await asyncio.sleep(0)
                     except AttributeError as e:
-                        pass
+                        logging.critical("`on_close_connection` callback not found. Maybe you haven't implemented it yet?")
+                        raise e
                     except Exception as e:
                         raise e
             except Exception as e:
                 raise e
-
+            
             await websocket_protocol.close()
-        except websockets.exceptions.ConnectionClosedError:
-            try:
-                for ws_server_application in self.ws_server_applications:
-                    try:
-                        await ws_server_application.on_close_connection(
-                            websocket_protocol)
-                        await asyncio.sleep(0)
-                    except AttributeError as e:
-                        pass
-                    except Exception as e:
-                        raise e
-            except Exception as e:
-                raise e
-
-            await websocket_protocol.close()
-
+        except Exception as e:
+            raise e
 
 class ws_server_log_level(enum.Enum):
     LEVEL_INFO = 0
@@ -218,7 +206,7 @@ class simple_ws_server_application(ws_server_application_protocol):
     """
     A simple, official implementation of websocket server application, providing some simple plugins.
     """
-
+    is_logged_in = False
     def log(self,
             log: str,
             log_level: ws_server_log_level = ws_server_log_level.LEVEL_INFO):
@@ -269,7 +257,6 @@ class simple_ws_server_application(ws_server_application_protocol):
             self.ws_server_instance.sessions[new_session_token] = content[
                 "username"]
             self.log("The session token: {}".format(new_session_token))
-            setattr(self, "is_logged_in", True)
             setattr(self, "username", content["username"])
             setattr(self, "session_token", new_session_token)
             response = {
@@ -318,8 +305,8 @@ class simple_ws_server_application(ws_server_application_protocol):
                 content["username"], content["session_token"]))
             try:
                 del self.ws_server_instance.sessions[content["session_token"]]
-            except KeyError:
-                pass
+            except KeyError as e:
+                logging.exception(e)
             except AttributeError as e:
                 logging.exception(e)
             except Exception as e:

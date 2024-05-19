@@ -88,6 +88,22 @@ class judge_ws_server_application(ws_server.ws_server_application_protocol):
                 'websocket_protocol':
                 websocket_protocol
             })
+        
+        response = {
+            'type': 'submission_id',
+            'content': {
+                'submission_id': self.ws_server_instance.server_instance.get_module_instance(
+                    'judge').now_submission_id,
+                'request_key': content['request_key'],
+            }
+        }
+        
+        try:
+            await websocket_protocol.send(json.dumps(response))
+        except websockets.exceptions.ConnectionClosed:
+            pass
+
+        response.clear()
     
     async def on_problem_statement(
             self,
@@ -154,3 +170,5 @@ class judge_ws_server_application(ws_server.ws_server_application_protocol):
 
         await websocket_protocol.send(json.dumps(response))
         response.clear()
+    
+    # async def 

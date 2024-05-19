@@ -73,10 +73,8 @@ function deepEqual(object1: object, object2: object) {
     }
 
     for (let index = 0; index < keys1.length; index++) {
-        const val1 = object1[keys1[index]];
-        const val2 = object2[keys2[index]];
-        const areObjects = isObject(val1) && isObject(val2);
-        if (areObjects && !deepEqual(val1, val2) ||
+        const val1 = getProperty(object1, keys1[index]), val2 = getProperty(object2, keys2[index]), areObjects = isObject(val1) && isObject(val2);
+        if ((areObjects && !deepEqual(val1 as object, val2 as object)) ||
             !areObjects && val1 !== val2) {
             return false;
         }
@@ -87,5 +85,19 @@ function deepEqual(object1: object, object2: object) {
 
 
 export function compareArray(a: unknown[], b: unknown[]) {
-    return a.length === b.length && a.every((v, i) => deepEqual(v, b[i]));
+    return (a.length === b.length) && (a.every((v, i) => (isObject(v) && isObject(b[i])) ? deepEqual(v as object, b[i] as object) : (v === b[i])));
 }
+
+export declare type WebSocketMessage = string | ArrayBuffer | SharedArrayBuffer | Blob | ArrayBufferView;
+export declare type SendMessage = (message: WebSocketMessage, keep?: boolean) => void;
+export declare type SendJsonMessage = <T = unknown>(jsonMessage: T, keep?: boolean) => void;
+export declare type WebSocketLike = WebSocket | EventSource;
+
+export declare type WebSocketHook<T = unknown, P = WebSocketEventMap['message'] | null> = {
+    sendMessage: SendMessage;
+    sendJsonMessage: SendJsonMessage;
+    lastMessage: P;
+    lastJsonMessage: T;
+    readyState: ReadyState;
+    getWebSocket: () => (WebSocketLike | null);
+};

@@ -79,7 +79,6 @@ class chat_ws_server_application(ws_server.ws_server_application_protocol):
                         'The user {} tried to use session token: {} to send message.'
                         .format(content['from'], content['session_token']))
                 except KeyError as e:
-                    logging.error(e)
                     self.log(
                         'The user {} tried to send a message to whom is not online.'
                         .format(content['from']))

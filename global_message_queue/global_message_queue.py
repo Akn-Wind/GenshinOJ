@@ -41,6 +41,7 @@ class global_message_queue:
 
                 stdout, stderr = await proc.communicate()
                 print(f'{command!r} exited with {proc.returncode}, pid={proc.pid}')
+                return proc.returncode
         except TimeoutError:
             raise TimeoutError
         except Exception as e:

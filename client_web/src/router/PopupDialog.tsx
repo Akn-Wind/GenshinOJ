@@ -8,8 +8,13 @@ import {
     DialogActions,
 } from "@fluentui/react-components";
 
-export default function PopupDialog({ text, open, setPopupDialogOpenState, onClose }) {
-    return <Dialog modalType="alert" open={open} onOpenChange={(event, data) => setPopupDialogOpenState(data.open)}>
+export default function PopupDialog({ text, open, setPopupDialogOpenState, onClose }: {
+    text: string,
+    open: boolean,
+    setPopupDialogOpenState: React.Dispatch<React.SetStateAction<boolean>>,
+    onClose?: () => void,
+}) {
+    return <Dialog modalType="alert" open={open} onOpenChange={(_, data) => setPopupDialogOpenState(data.open)}>
         <DialogSurface>
             <DialogBody>
                 <DialogContent>{text}</DialogContent>

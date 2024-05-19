@@ -14,6 +14,7 @@ const Chat = React.lazy(() => import("./router/Chat"));
 const ChatMainUser = React.lazy(() => import("./router/ChatMainUser"));
 const Problem = React.lazy(() => import("./router/Problem"));
 const ProblemMain = React.lazy(() => import("./router/ProblemMain"));
+const Submission = React.lazy(() => import("./router/Submission"));
 import ErrorPage from "./ErrorPage";
 import { Skeleton } from "@fluentui/react-components";
 import Logout from "./router/Logout";
@@ -66,6 +67,20 @@ const router = createBrowserRouter([
                         loader: ({ params }) => {
                             document.title = "Problem " + params.problem_number;
                             return { problemNumber: params.problem_number };
+                        },
+                    }
+                ],
+            },
+            {
+                path: "/submission",
+                loader: () => document.title = "Submission",
+                children: [
+                    {
+                        path: "/submission/:submission_id",
+                        element: <Suspense fallback={<Skeleton />}><Submission /></Suspense>,
+                        loader: ({ params }) => {
+                            document.title = "Submission " + params.submission_id;
+                            return { submissionId: params.submission_id };
                         },
                     }
                 ],

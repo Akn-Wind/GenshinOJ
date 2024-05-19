@@ -205,7 +205,7 @@ async def websocket_session(on_open):
                     background_tasks.remove)
 
                 await task_message_processing
-            except websockets.exceptions.ConnectionClosedError:
+            except websockets.exceptions.ConnectionClosed:
                 server_down = True
                 print('Quitting...')
                 application.exit()

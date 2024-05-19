@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom";
 import * as globals from "./Globals.ts";
 import { useEffect } from "react";
 
@@ -7,5 +6,5 @@ export default function Logout() {
         globals.clearCache("@all");
     }, [])
 
-    return <Link to="/login" />;
+    return <></>;
 }

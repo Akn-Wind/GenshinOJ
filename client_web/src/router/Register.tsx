@@ -29,19 +29,40 @@ const useStyles = makeStyles({
     },
 });
 
-function RegisterChecker({ setDialogRegisterSuccessOpenState, setDialogRegisterFailureOpenState, requestKey, lastJsonMessage }) {
+function RegisterChecker({ setDialogRegisterSuccessOpenState, setDialogRegisterFailureOpenState, requestKey, lastJsonMessage }: {
+    setDialogRegisterSuccessOpenState: React.Dispatch<React.SetStateAction<boolean>>;
+    setDialogRegisterFailureOpenState: React.Dispatch<React.SetStateAction<boolean>>;
+    requestKey: string;
+    lastJsonMessage: unknown;
+}) {
     const [websocketMessageHistory, setWebsocketMessageHistory] = useState([]);
 
     useEffect(() => {
         if (lastJsonMessage !== null)
-            setWebsocketMessageHistory((previousMessageHistory) => previousMessageHistory.concat(lastJsonMessage));
+            setWebsocketMessageHistory((previousMessageHistory) => previousMessageHistory.concat(lastJsonMessage as []));
     }, [lastJsonMessage]);
 
     useEffect(() => {
         const _websocketMessageHistory = websocketMessageHistory;
-        websocketMessageHistory.map((message, index) => {
-            if (message && message.type) {
-                if (message.type == "quit" && message.content.reason == "registration_success") {
+        websocketMessageHistory.map((_message, index) => {
+            interface RegisterSessionResult {
+                type: string;
+                content: {
+                    reason: string,
+                    request_key: string
+                };
+            }
+
+            function isRegisterSession(x: object) {
+                if ('type' in x && 'content' in x && typeof x.content === 'object') {
+                    return 'request_key' in (x.content as object) && 'reason' in (x.content as object) && x.type === 'quit';
+                }
+
+                return false;
+            }
+            if (_message && isRegisterSession(_message)) {
+                const message = _message as RegisterSessionResult;
+                if (message.content.reason == "registration_success") {
                     setDialogRegisterSuccessOpenState(true);
                     globals.setData("isLoggedIn", false);
                     delete _websocketMessageHistory[index];
@@ -54,13 +75,13 @@ function RegisterChecker({ setDialogRegisterSuccessOpenState, setDialogRegisterF
                 }
             }
         });
-    }, [websocketMessageHistory, requestKey]);
+    }, [websocketMessageHistory, requestKey, setDialogRegisterFailureOpenState, setDialogRegisterSuccessOpenState]);
 
     return <div></div>;
 }
 
 export default function Register() {
-    const { sendJsonMessage, lastJsonMessage } = useOutletContext();
+    const { sendJsonMessage, lastJsonMessage } = useOutletContext<globals.WebSocketHook>();
     const [requestKey, setRequestKey] = useState("");
     const [registerUsername, setRegisterUsername] = useState("");
     const [registerPassword, setRegisterPassword] = useState("");

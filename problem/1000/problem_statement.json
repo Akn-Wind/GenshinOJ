@@ -1,6 +1,6 @@
 {
     "problem_number": 1000,
-    "difficulty": 0,
+    "difficulty": 1,
     "problem_name": "Genshin Impact",
     "problem_statement": [
         "You' re given one integer and you should print \"Genshin Impact, launch!\"."
